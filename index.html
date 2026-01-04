@@ -839,7 +839,7 @@ ${useTagsHTML}` : ''}
         // Auto-connect if credentials are stored
         window.addEventListener('DOMContentLoaded', () => {
             // First check if credentials are embedded in code
-            if (AIRTABLE_CONFIG.apiKey && AIRTABLE_CONFIG.baseId && AIRTABLE_CONFIG.tableId) {
+            if (AIRTABLE_CONFIG.apiKey) {
                 localStorage.setItem('airtable_key', AIRTABLE_CONFIG.apiKey);
                 localStorage.setItem('airtable_base', AIRTABLE_CONFIG.baseId);
                 localStorage.setItem('airtable_table', AIRTABLE_CONFIG.tableId);
