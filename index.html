@@ -847,11 +847,8 @@ ${useTagsHTML}` : ''}
             }
             // Otherwise check localStorage
             else if (localStorage.getItem('airtable_key')) {
-                document.getElementById('apiKey').value = localStorage.getItem('airtable_key');
-                document.getElementById('baseId').value = localStorage.getItem('airtable_base');
-                document.getElementById('tableId').value = localStorage.getItem('airtable_table');
-                loadCocktails();
-            }
+    loadCocktails();
+}
         });
     </script>
 </body>
