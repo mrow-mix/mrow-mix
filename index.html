@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mrow Mix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+            color: #2e4a3a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #558b6e;
+        }
+
+        .setup-section {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .setup-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #558b6e;
+        }
+
+        .setup-section input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #a8c5b0;
+            border-radius: 8px;
+            background: white;
+            color: #2e4a3a;
+            font-size: 14px;
+        }
+
+        .setup-section button {
+            width: 100%;
+            padding: 12px;
+            background: #558b6e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .setup-section button:hover {
+            background: #3d6b4f;
+        }
+
+        .setup-section .help-text {
+            font-size: 12px;
+            color: #5a7d68;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .filter-app {
+            display: none;
+        }
+
+        .filter-section {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .filter-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #558b6e;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 12px 20px;
+            border: 2px solid #a8c5b0;
+            background: white;
+            color: #2e4a3a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .filter-btn:hover {
+            background: #f0f7f2;
+        }
+
+        .filter-btn.active {
+            background: #558b6e;
+            border-color: #558b6e;
+            color: white;
+        }
+
+        .flavor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .flavor-btn {
+            padding: 10px;
+            border: 2px solid #a8c5b0;
+            background: white;
+            color: #2e4a3a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .flavor-btn:hover {
+            background: #f0f7f2;
+        }
+
+        .flavor-btn.active {
+            background: #558b6e;
+            border-color: #558b6e;
+            color: white;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-count {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #558b6e;
+            font-weight: 600;
+        }
+
+        .cocktail-card {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .cocktail-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .cocktail-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #558b6e;
+            margin-bottom: 8px;
+        }
+
+        .cocktail-meta {
+            font-size: 13px;
+            color: #5a7d68;
+            margin-bottom: 5px;
+        }
+
+        .cocktail-recipe {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #a8c5b0;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 14px;
+            display: none;
+            color: #2e4a3a;
+        }
+
+        .cocktail-card.expanded .cocktail-recipe {
+            display: block;
+        }
+
+        .use-tag-pill {
+            display: inline-block;
+            background: #558b6e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 6px;
+            margin-top: 4px;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            color: #558b6e;
+            border: 2px solid #a8c5b0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .reset-btn:hover {
+            background: #f0f7f2;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #558b6e;
+        }
+
+        .error {
+            background: rgba(220, 100, 100, 0.1);
+            border: 2px solid #c97575;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #8b3a3a;
+        }
+
+        .no-preference {
+            font-style: italic;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍸 Mrow Mix</h1>
+
+        <!-- Setup Section -->
+        <div id="setupSection" class="setup-section">
+            <h2>Connect to Airtable</h2>
+            <input type="text" id="apiKey" placeholder="Personal Access Token" />
+            <input type="text" id="baseId" placeholder="Base ID (starts with 'app')" />
+            <input type="text" id="tableId" placeholder="Table ID (starts with 'tbl')" />
+            <button onclick="connectToAirtable()">Connect</button>
+            
+            <div class="help-text">
+                <strong>How to find these:</strong><br>
+                1. <strong>Personal Access Token:</strong> Go to airtable.com/create/tokens → Create token → Add scopes: data.records:read → Add your base → Create token<br>
+                2. <strong>Base ID:</strong> Open your base → Look at URL: airtable.com/[BASE_ID]/...<br>
+                3. <strong>Table ID:</strong> Click your table → URL will show: .../[TABLE_ID]/...
+            </div>
+        </div>
+
+        <!-- Filter App (hidden until connected) -->
+        <div id="filterApp" class="filter-app">
+            <button class="reset-btn" onclick="resetFilters()">↻ Reset All Filters</button>
+
+            <!-- Question 1: Spirit Tone -->
+            <div class="filter-section">
+                <h2>1. Spirit preference?</h2>
+                <div class="button-group">
+                    <button class="filter-btn" data-filter="tone" data-value="Light">Light Spirits</button>
+                    <button class="filter-btn" data-filter="tone" data-value="Dark">Dark Spirits</button>
+                    <button class="filter-btn" data-filter="tone" data-value="Something else">Something Else</button>
+                </div>
+            </div>
+
+            <!-- Question 2: Style -->
+            <div class="filter-section">
+                <h2>2. What style?</h2>
+                <div class="button-group">
+                    <button class="filter-btn" data-filter="style" data-value="Refreshing and bright">Refreshing & Bright</button>
+                    <button class="filter-btn" data-filter="style" data-value="Smooth and serious">Smooth & Serious</button>
+                </div>
+            </div>
+
+            <!-- Question 3: Format -->
+            <div class="filter-section">
+                <h2>3. How would you like it served?</h2>
+                <div class="button-group">
+                    <button class="filter-btn" data-filter="format" data-value="Up">Up</button>
+                    <button class="filter-btn" data-filter="format" data-value="Tall">Tall</button>
+                    <button class="filter-btn" data-filter="format" data-value="On the rocks">On the Rocks</button>
+                </div>
+            </div>
+
+            <!-- Question 4: Flavor Profile (multi-select with AND logic) -->
+            <div class="filter-section">
+                <h2>4. Flavor profile?</h2>
+                <div class="flavor-grid">
+                    <button class="flavor-btn" data-filter="flavor" data-value="Sweet">Sweet</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Dry">Dry</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Bitter">Bitter</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Briny">Briny</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Crisp">Crisp</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Floral">Floral</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Fruity">Fruity</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Funky">Funky</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Herbal">Herbal</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Nutty">Nutty</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Peppery">Peppery</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Piquant">Piquant</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Savory">Savory</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Smoky">Smoky</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Tart">Tart</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Toasty">Toasty</button>
+                    <button class="flavor-btn" data-filter="flavor" data-value="Warm">Warm</button>
+                </div>
+            </div>
+
+            <!-- Question 5: Use Case -->
+            <div class="filter-section">
+                <h2>5. Use case?</h2>
+                <div id="useTagContainer" class="flavor-grid">
+                    <!-- Use tags will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="results-section">
+                <div class="results-count" id="resultsCount"></div>
+                <div id="results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PASTE YOUR CREDENTIALS HERE (between the quotes)
+        const AIRTABLE_CONFIG = {
+            apiKey: 'patLRircCQqSm4M9E.b3be07a3e6c147498ef91659264326bd574768afa2f79713f5ed7e69bb1a2b23',  // Your Personal Access Token
+            baseId: 'appks1cOShWJDKhWD',  // Your Base ID (starts with 'app')
+            tableId: 'tblLjSob2G7Z75FQs'  // Your Table ID (starts with 'tbl')
+        };
+        
+        let cocktails = [];
+        let allUseTags = [];
+        let filters = {
+            tone: [],
+            style: null,
+            format: [],
+            flavor: [],
+            useTags: []
+        };
+
+        // Connect to Airtable
+        async function connectToAirtable() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const baseId = document.getElementById('baseId').value.trim();
+            const tableId = document.getElementById('tableId').value.trim();
+
+            console.log('Attempting to connect...', { apiKey: apiKey.substring(0, 10) + '...', baseId, tableId });
+
+            if (!apiKey || !baseId || !tableId) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Validate format
+            if (!baseId.startsWith('app')) {
+                alert('Base ID should start with "app"');
+                return;
+            }
+
+            if (!tableId.startsWith('tbl')) {
+                alert('Table ID should start with "tbl"');
+                return;
+            }
+
+            // Store credentials in localStorage
+            localStorage.setItem('airtable_key', apiKey);
+            localStorage.setItem('airtable_base', baseId);
+            localStorage.setItem('airtable_table', tableId);
+
+            // Show loading in results area
+            document.getElementById('filterApp').style.display = 'block';
+            document.getElementById('results').innerHTML = '<div class="loading">Connecting to Airtable...</div>';
+
+            try {
+                await loadCocktails();
+            } catch (error) {
+                console.error('Connection error:', error);
+                document.getElementById('results').innerHTML = `<div class="error">Connection failed: ${error.message}</div>`;
+            }
+        }
+
+        // Load cocktails from Airtable
+        async function loadCocktails() {
+            const apiKey = localStorage.getItem('airtable_key');
+            const baseId = localStorage.getItem('airtable_base');
+            const tableId = localStorage.getItem('airtable_table');
+
+            console.log('loadCocktails called');
+            console.log('Credentials:', { 
+                hasKey: !!apiKey, 
+                keyStart: apiKey ? apiKey.substring(0, 10) : 'none',
+                baseId, 
+                tableId 
+            });
+
+            if (!apiKey || !baseId || !tableId) {
+                throw new Error('Missing credentials in localStorage');
+            }
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">Loading cocktails...</div>';
+
+            try {
+                let allRecords = [];
+                let offset = null;
+
+                // Fetch all records (handle pagination)
+                do {
+                    const url = `https://api.airtable.com/v0/${baseId}/${tableId}${offset ? `?offset=${offset}` : ''}`;
+                    console.log('Fetching:', url);
+                    
+                    const response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    console.log('Response status:', response.status, response.statusText);
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error('Error response:', errorBody);
+                        throw new Error(`Airtable API error (${response.status}): ${errorBody.substring(0, 300)}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Records in this batch:', data.records ? data.records.length : 0);
+                    
+                    if (!data.records) {
+                        throw new Error('No records array in response');
+                    }
+                    
+                    allRecords = allRecords.concat(data.records);
+                    offset = data.offset;
+                    
+                    console.log('Total records so far:', allRecords.length, 'Has more:', !!offset);
+                } while (offset);
+
+                console.log('All records loaded:', allRecords.length);
+
+                cocktails = allRecords.map(record => {
+                    // Use lookup fields for Category and Branch
+                    let category = '';
+                    if (record.fields['Category']) {
+                        if (typeof record.fields['Category'] === 'string') {
+                            category = record.fields['Category'];
+                        } else if (Array.isArray(record.fields['Category']) && record.fields['Category'].length > 0) {
+                            category = record.fields['Category'][0];
+                        }
+                    }
+                    
+                    let branch = '';
+                    if (record.fields['Branch']) {
+                        if (typeof record.fields['Branch'] === 'string') {
+                            branch = record.fields['Branch'];
+                        } else if (Array.isArray(record.fields['Branch']) && record.fields['Branch'].length > 0) {
+                            branch = record.fields['Branch'][0];
+                        }
+                    }
+                    
+                    return {
+                        id: record.id,
+                        name: record.fields.Name || 'Untitled',
+                        recipe: record.fields['Recipe/Spec'] || 'No recipe available',
+                        category: category,
+                        branch: branch,
+                        method: record.fields.Method || '',
+                        glass: record.fields.Glass || '',
+                        ice: record.fields.Ice || '',
+                        garnish: record.fields.Garnish || '',
+                        buildNote: record.fields['Build Note'] || '',
+                        altsNotes: record.fields['Alts/Other Notes'] || '',
+                        peterRating: record.fields['Peter Rating'] || '',
+                        ingredientCategories: record.fields['Ingredient Categories'] || '',
+                        // Multi-select fields come as arrays from Airtable API
+                        spiritTone: record.fields['Spirit Tone'] || [],
+                        style: record.fields.Style || '',
+                        format: record.fields.Format || [],
+                        flavorProfile: record.fields['Flavor Profile'] || [],
+                        useTags: record.fields['Use Tag'] || []
+                    };
+                });
+
+                // Collect all unique Use Tags
+                const useTagSet = new Set();
+                cocktails.forEach(c => {
+                    if (Array.isArray(c.useTags)) {
+                        c.useTags.forEach(tag => useTagSet.add(tag));
+                    }
+                });
+                allUseTags = Array.from(useTagSet).sort();
+
+                console.log('Cocktails processed:', cocktails.length);
+                console.log('Use Tags found:', allUseTags);
+                console.log('Sample cocktail:', cocktails[0]);
+                if (cocktails[0]) {
+                    console.log('  Category:', cocktails[0].category, '(type:', typeof cocktails[0].category + ')');
+                    console.log('  Category length:', cocktails[0].category ? cocktails[0].category.length : 'null/undefined');
+                    console.log('  Branch:', cocktails[0].branch, '(type:', typeof cocktails[0].branch + ')');
+                    console.log('  Peter Rating:', cocktails[0].peterRating, '(type:', typeof cocktails[0].peterRating + ')');
+                    console.log('  Flavor Profile:', cocktails[0].flavorProfile);
+                }
+                
+                // Check a few more cocktails for Category
+                console.log('Checking Category for first 5 cocktails:');
+                for (let i = 0; i < Math.min(5, cocktails.length); i++) {
+                    console.log(`  ${cocktails[i].name}: category = "${cocktails[i].category}"`);
+                }
+
+                // Hide setup, show app
+                document.getElementById('setupSection').style.display = 'none';
+                document.getElementById('filterApp').style.display = 'block';
+
+                // Populate Use Tags
+                populateUseTags();
+
+                // Initialize filters
+                setupFilterButtons();
+                applyFilters();
+
+            } catch (error) {
+                console.error('Load error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error loading cocktails:</strong><br>
+                        ${error.message}<br><br>
+                        <strong>Debug info:</strong><br>
+                        Base ID: ${baseId}<br>
+                        Table ID: ${tableId}<br>
+                        Token starts with: ${apiKey ? apiKey.substring(0, 10) + '...' : 'missing'}<br><br>
+                        Open browser console (F12 or right-click → Inspect → Console) for more details.
+                    </div>
+                `;
+                throw error;
+            }
+        }
+
+        // Populate Use Tags dynamically
+        function populateUseTags() {
+            const container = document.getElementById('useTagContainer');
+            container.innerHTML = allUseTags.map(tag => 
+                `<button class="flavor-btn" data-filter="useTag" data-value="${tag}">${tag}</button>`
+            ).join('');
+        }
+
+        // Setup filter button interactions
+        function setupFilterButtons() {
+            console.log('Setting up filter buttons...');
+            
+            // Single-select filters (tone, style, format - but format can be multi)
+            const toneButtons = document.querySelectorAll('.filter-btn[data-filter="tone"]');
+            console.log('Tone buttons found:', toneButtons.length);
+            
+            toneButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Tone button clicked:', this.dataset.value);
+                    const value = this.dataset.value;
+                    const wasActive = this.classList.contains('active');
+                    
+                    document.querySelectorAll('.filter-btn[data-filter="tone"]').forEach(b => b.classList.remove('active'));
+                    
+                    if (!wasActive) {
+                        this.classList.add('active');
+                        filters.tone = value ? [value] : [];
+                    } else {
+                        filters.tone = [];
+                    }
+                    
+                    console.log('Filters after tone click:', filters);
+                    applyFilters();
+                });
+            });
+
+            const styleButtons = document.querySelectorAll('.filter-btn[data-filter="style"]');
+            console.log('Style buttons found:', styleButtons.length);
+            
+            styleButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Style button clicked:', this.dataset.value);
+                    const value = this.dataset.value;
+                    const wasActive = this.classList.contains('active');
+                    
+                    document.querySelectorAll('.filter-btn[data-filter="style"]').forEach(b => b.classList.remove('active'));
+                    
+                    if (!wasActive) {
+                        this.classList.add('active');
+                        filters.style = value || null;
+                    } else {
+                        filters.style = null;
+                    }
+                    
+                    console.log('Filters after style click:', filters);
+                    applyFilters();
+                });
+            });
+
+            const formatButtons = document.querySelectorAll('.filter-btn[data-filter="format"]');
+            console.log('Format buttons found:', formatButtons.length);
+            
+            formatButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Format button clicked:', this.dataset.value);
+                    const value = this.dataset.value;
+                    const wasActive = this.classList.contains('active');
+                    
+                    document.querySelectorAll('.filter-btn[data-filter="format"]').forEach(b => b.classList.remove('active'));
+                    
+                    if (!wasActive) {
+                        this.classList.add('active');
+                        filters.format = value ? [value] : [];
+                    } else {
+                        filters.format = [];
+                    }
+                    
+                    console.log('Filters after format click:', filters);
+                    applyFilters();
+                });
+            });
+
+            // Multi-select flavor filters (AND logic)
+            const flavorButtons = document.querySelectorAll('.flavor-btn[data-filter="flavor"]');
+            console.log('Flavor buttons found:', flavorButtons.length);
+            
+            flavorButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Flavor button clicked:', this.dataset.value);
+                    this.classList.toggle('active');
+                    const value = this.dataset.value;
+                    
+                    if (this.classList.contains('active')) {
+                        if (!filters.flavor.includes(value)) {
+                            filters.flavor.push(value);
+                        }
+                    } else {
+                        filters.flavor = filters.flavor.filter(f => f !== value);
+                    }
+                    
+                    console.log('Filters after flavor click:', filters);
+                    applyFilters();
+                });
+            });
+
+            // Multi-select Use Tag filters (OR logic)
+            const useTagButtons = document.querySelectorAll('.flavor-btn[data-filter="useTag"]');
+            console.log('UseTag buttons found:', useTagButtons.length);
+            
+            useTagButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('UseTag button clicked:', this.dataset.value);
+                    this.classList.toggle('active');
+                    const value = this.dataset.value;
+                    
+                    if (this.classList.contains('active')) {
+                        if (!filters.useTags.includes(value)) {
+                            filters.useTags.push(value);
+                        }
+                    } else {
+                        filters.useTags = filters.useTags.filter(t => t !== value);
+                    }
+                    
+                    console.log('Filters after useTag click:', filters);
+                    applyFilters();
+                });
+            });
+            
+            console.log('Filter button setup complete');
+        }
+
+        // Apply filters with AND logic for flavors
+        function applyFilters() {
+            console.log('Applying filters:', filters);
+            console.log('Total cocktails:', cocktails.length);
+            
+            let filtered = cocktails.filter(cocktail => {
+                // Spirit Tone filter (OR logic within multi-select)
+                if (filters.tone.length > 0) {
+                    const hasMatch = filters.tone.some(tone => cocktail.spiritTone.includes(tone));
+                    if (!hasMatch) return false;
+                }
+
+                // Style filter
+                if (filters.style && cocktail.style !== filters.style) {
+                    return false;
+                }
+
+                // Format filter (OR logic within multi-select)
+                if (filters.format.length > 0) {
+                    const hasMatch = filters.format.some(format => cocktail.format.includes(format));
+                    if (!hasMatch) return false;
+                }
+
+                // Flavor Profile filter (AND logic - ALL selected flavors must be present)
+                if (filters.flavor.length > 0) {
+                    const hasAllFlavors = filters.flavor.every(flavor => 
+                        cocktail.flavorProfile.includes(flavor)
+                    );
+                    if (!hasAllFlavors) return false;
+                }
+
+                // Use Tag filter (OR logic - ANY selected use tag can match)
+                if (filters.useTags.length > 0) {
+                    const hasMatch = filters.useTags.some(tag => cocktail.useTags.includes(tag));
+                    if (!hasMatch) return false;
+                }
+
+                return true;
+            });
+
+            console.log('Filtered cocktails:', filtered.length);
+
+            // Sort alphabetically by name
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+            displayResults(filtered);
+        }
+
+        // Display results
+        function displayResults(cocktails) {
+            const resultsCount = document.getElementById('resultsCount');
+            const resultsDiv = document.getElementById('results');
+
+            resultsCount.textContent = `${cocktails.length} cocktail${cocktails.length !== 1 ? 's' : ''} found`;
+
+            if (cocktails.length === 0) {
+                resultsDiv.innerHTML = '<div class="cocktail-card"><div class="cocktail-name">No matches found</div><div class="cocktail-meta">Try adjusting your filters</div></div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = cocktails.map(cocktail => {
+                // Build star rating display
+                let ratingHTML = '';
+                if (cocktail.peterRating && !isNaN(cocktail.peterRating)) {
+                    const stars = '★'.repeat(parseInt(cocktail.peterRating));
+                    ratingHTML = `<div class="cocktail-meta">Peter Rating: ${stars}</div>`;
+                }
+                
+                // Build Use Tag pills HTML
+                let useTagsHTML = '';
+                if (cocktail.useTags && cocktail.useTags.length > 0) {
+                    useTagsHTML = cocktail.useTags.map(tag => 
+                        `<span class="use-tag-pill">${tag}</span>`
+                    ).join('');
+                }
+                
+                return `
+                <div class="cocktail-card" onclick="toggleRecipe(this, event)">
+                    <div class="cocktail-name">${cocktail.name}</div>
+                    ${cocktail.category ? `<div class="cocktail-meta">${cocktail.category}</div>` : ''}
+                    ${cocktail.branch ? `<div class="cocktail-meta">${cocktail.branch}</div>` : ''}
+                    ${cocktail.flavorProfile && cocktail.flavorProfile.length > 0 ? 
+                        `<div class="cocktail-meta">${cocktail.flavorProfile.join(', ')}</div>` : ''}
+                    ${ratingHTML}
+                    
+                    <div class="cocktail-recipe">
+<strong style="font-size: 18px;">${cocktail.name}</strong>${cocktail.category ? `
+<strong>Category:</strong> ${cocktail.category}` : ''}${cocktail.branch ? `
+<strong>Branch:</strong> ${cocktail.branch}` : ''}
+
+<strong>Recipe:</strong>
+${cocktail.recipe}
+${cocktail.method ? `<strong>Method:</strong> ${cocktail.method}
+` : ''}${cocktail.glass ? `<strong>Glass:</strong> ${cocktail.glass}
+` : ''}${cocktail.ice ? `<strong>Ice:</strong> ${cocktail.ice}
+` : ''}${cocktail.garnish ? `<strong>Garnish:</strong> ${cocktail.garnish}
+` : ''}${cocktail.buildNote ? `
+<strong>Build Note:</strong> ${cocktail.buildNote}
+` : ''}${cocktail.altsNotes ? `<strong>Alts/Other Notes:</strong> ${cocktail.altsNotes}
+` : ''}${useTagsHTML ? `
+<strong>Use Tags:</strong>
+${useTagsHTML}` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle recipe display
+        function toggleRecipe(card, event) {
+            // Don't toggle if user is selecting text
+            if (window.getSelection().toString().length > 0) {
+                return;
+            }
+            card.classList.toggle('expanded');
+        }
+
+        // Reset all filters
+        function resetFilters() {
+            filters = {
+                tone: [],
+                style: null,
+                format: [],
+                flavor: [],
+                useTags: []
+            };
+
+            document.querySelectorAll('.filter-btn, .flavor-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            applyFilters();
+        }
+
+        // Auto-connect if credentials are stored
+        window.addEventListener('DOMContentLoaded', () => {
+            // First check if credentials are embedded in code
+            if (AIRTABLE_CONFIG.apiKey && AIRTABLE_CONFIG.baseId && AIRTABLE_CONFIG.tableId) {
+                localStorage.setItem('airtable_key', AIRTABLE_CONFIG.apiKey);
+                localStorage.setItem('airtable_base', AIRTABLE_CONFIG.baseId);
+                localStorage.setItem('airtable_table', AIRTABLE_CONFIG.tableId);
+                loadCocktails();
+            }
+            // Otherwise check localStorage
+            else if (localStorage.getItem('airtable_key')) {
+                document.getElementById('apiKey').value = localStorage.getItem('airtable_key');
+                document.getElementById('baseId').value = localStorage.getItem('airtable_base');
+                document.getElementById('tableId').value = localStorage.getItem('airtable_table');
+                loadCocktails();
+            }
+        });
+    </script>
+</body>
+</html>
