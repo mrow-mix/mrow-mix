@@ -347,6 +347,19 @@
                 </div>
             </div>
 
+            <!-- Question 6: Peter Rating -->
+            <div class="filter-section">
+                <h2>6. Rating?</h2>
+                <div class="button-group">
+                    <button class="filter-btn" data-filter="rating" data-value="Unrated">Unrated</button>
+                    <button class="filter-btn" data-filter="rating" data-value="1">★</button>
+                    <button class="filter-btn" data-filter="rating" data-value="2">★★</button>
+                    <button class="filter-btn" data-filter="rating" data-value="3">★★★</button>
+                    <button class="filter-btn" data-filter="rating" data-value="4">★★★★</button>
+                    <button class="filter-btn" data-filter="rating" data-value="5">★★★★★</button>
+                </div>
+            </div>
+
             <!-- Results -->
             <div class="results-section">
                 <div class="results-count" id="resultsCount"></div>
@@ -356,21 +369,22 @@
     </div>
 
     <script>
-        // PASTE YOUR CREDENTIALS HERE (between the quotes)
+        // Leave these empty - credentials will be stored in your browser after first login
         const AIRTABLE_CONFIG = {
-            apiKey: '',  // Your Personal Access Token
-            baseId: 'appks1cOShWJDKhWD',  // Your Base ID (starts with 'app')
-            tableId: 'tblLjSob2G7Z75FQs'  // Your Table ID (starts with 'tbl')
+            apiKey: '',  
+            baseId: 'appks1cOShWJDKhWD',  
+            tableId: 'tblLjSob2G7Z75FQs'  
         };
         
         let cocktails = [];
         let allUseTags = [];
         let filters = {
             tone: [],
-            style: null,
+            style: [],
             format: [],
             flavor: [],
-            useTags: []
+            useTags: [],
+            rating: []
         };
 
         // Connect to Airtable
@@ -583,23 +597,22 @@
         function setupFilterButtons() {
             console.log('Setting up filter buttons...');
             
-            // Single-select filters (tone, style, format - but format can be multi)
+            // Multi-select filters with OR logic (tone, style, format)
             const toneButtons = document.querySelectorAll('.filter-btn[data-filter="tone"]');
             console.log('Tone buttons found:', toneButtons.length);
             
             toneButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     console.log('Tone button clicked:', this.dataset.value);
+                    this.classList.toggle('active');
                     const value = this.dataset.value;
-                    const wasActive = this.classList.contains('active');
                     
-                    document.querySelectorAll('.filter-btn[data-filter="tone"]').forEach(b => b.classList.remove('active'));
-                    
-                    if (!wasActive) {
-                        this.classList.add('active');
-                        filters.tone = value ? [value] : [];
+                    if (this.classList.contains('active')) {
+                        if (!filters.tone.includes(value)) {
+                            filters.tone.push(value);
+                        }
                     } else {
-                        filters.tone = [];
+                        filters.tone = filters.tone.filter(t => t !== value);
                     }
                     
                     console.log('Filters after tone click:', filters);
@@ -613,16 +626,15 @@
             styleButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     console.log('Style button clicked:', this.dataset.value);
+                    this.classList.toggle('active');
                     const value = this.dataset.value;
-                    const wasActive = this.classList.contains('active');
                     
-                    document.querySelectorAll('.filter-btn[data-filter="style"]').forEach(b => b.classList.remove('active'));
-                    
-                    if (!wasActive) {
-                        this.classList.add('active');
-                        filters.style = value || null;
+                    if (this.classList.contains('active')) {
+                        if (!filters.style.includes(value)) {
+                            filters.style.push(value);
+                        }
                     } else {
-                        filters.style = null;
+                        filters.style = filters.style.filter(s => s !== value);
                     }
                     
                     console.log('Filters after style click:', filters);
@@ -636,19 +648,41 @@
             formatButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     console.log('Format button clicked:', this.dataset.value);
+                    this.classList.toggle('active');
                     const value = this.dataset.value;
-                    const wasActive = this.classList.contains('active');
                     
-                    document.querySelectorAll('.filter-btn[data-filter="format"]').forEach(b => b.classList.remove('active'));
-                    
-                    if (!wasActive) {
-                        this.classList.add('active');
-                        filters.format = value ? [value] : [];
+                    if (this.classList.contains('active')) {
+                        if (!filters.format.includes(value)) {
+                            filters.format.push(value);
+                        }
                     } else {
-                        filters.format = [];
+                        filters.format = filters.format.filter(f => f !== value);
                     }
                     
                     console.log('Filters after format click:', filters);
+                    applyFilters();
+                });
+            });
+
+            // Rating filter (multi-select with OR logic)
+            const ratingButtons = document.querySelectorAll('.filter-btn[data-filter="rating"]');
+            console.log('Rating buttons found:', ratingButtons.length);
+            
+            ratingButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Rating button clicked:', this.dataset.value);
+                    this.classList.toggle('active');
+                    const value = this.dataset.value;
+                    
+                    if (this.classList.contains('active')) {
+                        if (!filters.rating.includes(value)) {
+                            filters.rating.push(value);
+                        }
+                    } else {
+                        filters.rating = filters.rating.filter(r => r !== value);
+                    }
+                    
+                    console.log('Filters after rating click:', filters);
                     applyFilters();
                 });
             });
@@ -714,9 +748,10 @@
                     if (!hasMatch) return false;
                 }
 
-                // Style filter
-                if (filters.style && cocktail.style !== filters.style) {
-                    return false;
+                // Style filter (OR logic within multi-select)
+                if (filters.style.length > 0) {
+                    const hasMatch = filters.style.some(style => cocktail.style === style);
+                    if (!hasMatch) return false;
                 }
 
                 // Format filter (OR logic within multi-select)
@@ -736,6 +771,17 @@
                 // Use Tag filter (OR logic - ANY selected use tag can match)
                 if (filters.useTags.length > 0) {
                     const hasMatch = filters.useTags.some(tag => cocktail.useTags.includes(tag));
+                    if (!hasMatch) return false;
+                }
+
+                // Rating filter (OR logic - ANY selected rating can match)
+                if (filters.rating.length > 0) {
+                    const hasMatch = filters.rating.some(rating => {
+                        if (rating === 'Unrated') {
+                            return !cocktail.peterRating || cocktail.peterRating === '';
+                        }
+                        return parseInt(cocktail.peterRating) === parseInt(rating);
+                    });
                     if (!hasMatch) return false;
                 }
 
@@ -823,10 +869,11 @@ ${useTagsHTML}` : ''}
         function resetFilters() {
             filters = {
                 tone: [],
-                style: null,
+                style: [],
                 format: [],
                 flavor: [],
-                useTags: []
+                useTags: [],
+                rating: []
             };
 
             document.querySelectorAll('.filter-btn, .flavor-btn').forEach(btn => {
@@ -839,7 +886,7 @@ ${useTagsHTML}` : ''}
         // Auto-connect if credentials are stored
         window.addEventListener('DOMContentLoaded', () => {
             // First check if credentials are embedded in code
-            if (AIRTABLE_CONFIG.apiKey) {
+            if (AIRTABLE_CONFIG.apiKey && AIRTABLE_CONFIG.baseId && AIRTABLE_CONFIG.tableId) {
                 localStorage.setItem('airtable_key', AIRTABLE_CONFIG.apiKey);
                 localStorage.setItem('airtable_base', AIRTABLE_CONFIG.baseId);
                 localStorage.setItem('airtable_table', AIRTABLE_CONFIG.tableId);
@@ -847,8 +894,11 @@ ${useTagsHTML}` : ''}
             }
             // Otherwise check localStorage
             else if (localStorage.getItem('airtable_key')) {
-    loadCocktails();
-}
+                document.getElementById('apiKey').value = localStorage.getItem('airtable_key');
+                document.getElementById('baseId').value = localStorage.getItem('airtable_base');
+                document.getElementById('tableId').value = localStorage.getItem('airtable_table');
+                loadCocktails();
+            }
         });
     </script>
 </body>
