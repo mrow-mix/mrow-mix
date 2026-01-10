@@ -885,6 +885,14 @@ ${useTagsHTML}` : ''}
 
         // Auto-connect if credentials are stored
         window.addEventListener('DOMContentLoaded', () => {
+            // Pre-fill Base ID and Table ID from embedded config if available
+            if (AIRTABLE_CONFIG.baseId) {
+                document.getElementById('baseId').value = AIRTABLE_CONFIG.baseId;
+            }
+            if (AIRTABLE_CONFIG.tableId) {
+                document.getElementById('tableId').value = AIRTABLE_CONFIG.tableId;
+            }
+            
             // First check if credentials are embedded in code
             if (AIRTABLE_CONFIG.apiKey && AIRTABLE_CONFIG.baseId && AIRTABLE_CONFIG.tableId) {
                 localStorage.setItem('airtable_key', AIRTABLE_CONFIG.apiKey);
