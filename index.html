@@ -305,13 +305,13 @@
                 </div>
             </div>
 
-            <!-- Question 3: Format -->
+            <!-- Question 3: Serving Style -->
             <div class="filter-section">
                 <h2>3. How would you like it served?</h2>
                 <div class="button-group">
-                    <button class="filter-btn" data-filter="format" data-value="Up">Up</button>
-                    <button class="filter-btn" data-filter="format" data-value="Tall">Tall</button>
-                    <button class="filter-btn" data-filter="format" data-value="On the rocks">On the Rocks</button>
+                    <button class="filter-btn" data-filter="serving" data-value="Up">Up</button>
+                    <button class="filter-btn" data-filter="serving" data-value="Tall">Tall</button>
+                    <button class="filter-btn" data-filter="serving" data-value="On the rocks">On the Rocks</button>
                 </div>
             </div>
 
@@ -381,7 +381,7 @@
         let filters = {
             tone: [],
             style: [],
-            format: [],
+            serving: [],
             flavor: [],
             useTags: [],
             rating: []
@@ -642,24 +642,24 @@
                 });
             });
 
-            const formatButtons = document.querySelectorAll('.filter-btn[data-filter="format"]');
-            console.log('Format buttons found:', formatButtons.length);
+            const servingButtons = document.querySelectorAll('.filter-btn[data-filter="serving"]');
+            console.log('Serving buttons found:', servingButtons.length);
             
-            formatButtons.forEach(btn => {
+            servingButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    console.log('Format button clicked:', this.dataset.value);
+                    console.log('Serving button clicked:', this.dataset.value);
                     this.classList.toggle('active');
                     const value = this.dataset.value;
                     
                     if (this.classList.contains('active')) {
-                        if (!filters.format.includes(value)) {
-                            filters.format.push(value);
+                        if (!filters.serving.includes(value)) {
+                            filters.serving.push(value);
                         }
                     } else {
-                        filters.format = filters.format.filter(f => f !== value);
+                        filters.serving = filters.serving.filter(s => s !== value);
                     }
                     
-                    console.log('Filters after format click:', filters);
+                    console.log('Filters after serving click:', filters);
                     applyFilters();
                 });
             });
@@ -754,9 +754,24 @@
                     if (!hasMatch) return false;
                 }
 
-                // Format filter (OR logic within multi-select)
-                if (filters.format.length > 0) {
-                    const hasMatch = filters.format.some(format => cocktail.format.includes(format));
+                // Serving filter (maps to glass + ice combination)
+                if (filters.serving.length > 0) {
+                    const hasMatch = filters.serving.some(serving => {
+                        if (serving === 'Up') {
+                            // "Up" = served without ice (Ice field contains "Up")
+                            const iceStr = Array.isArray(cocktail.ice) ? cocktail.ice.join(',') : cocktail.ice;
+                            return iceStr.toLowerCase().includes('up');
+                        } else if (serving === 'Tall') {
+                            // "Tall" = served in tall glass
+                            const glassStr = Array.isArray(cocktail.glass) ? cocktail.glass.join(',') : cocktail.glass;
+                            return glassStr.toLowerCase().includes('tall');
+                        } else if (serving === 'On the rocks') {
+                            // "On the rocks" = served with ice
+                            const iceStr = Array.isArray(cocktail.ice) ? cocktail.ice.join(',') : cocktail.ice;
+                            return iceStr.toLowerCase().includes('on ice');
+                        }
+                        return false;
+                    });
                     if (!hasMatch) return false;
                 }
 
@@ -870,7 +885,7 @@ ${useTagsHTML}` : ''}
             filters = {
                 tone: [],
                 style: [],
-                format: [],
+                serving: [],
                 flavor: [],
                 useTags: [],
                 rating: []
