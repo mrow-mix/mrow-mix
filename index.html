@@ -341,7 +341,7 @@
 
             <!-- Question 5: Use Case -->
             <div class="filter-section">
-                <h2>5. Use case?</h2>
+                <h2>5. Occasion?</h2>
                 <div id="useTagContainer" class="flavor-grid">
                     <!-- Use tags will be populated dynamically -->
                 </div>
@@ -349,7 +349,7 @@
 
             <!-- Question 6: Peter Rating -->
             <div class="filter-section">
-                <h2>6. Rating?</h2>
+                <h2>6. Peter rating?</h2>
                 <div class="button-group">
                     <button class="filter-btn" data-filter="rating" data-value="Unrated">Unrated</button>
                     <button class="filter-btn" data-filter="rating" data-value="1">★</button>
@@ -527,7 +527,11 @@
                         style: record.fields.Style || '',
                         format: record.fields.Format || [],
                         flavorProfile: record.fields['Flavor Profile'] || [],
-                        useTags: record.fields['Use Tag'] || []
+                        useTags: record.fields['Use Tag'] || [],
+                        // Nutritional information
+                        calories: record.fields.Calories || '',
+                        sugar: record.fields['Sugar (g)'] || '',
+                        abv: record.fields.ABV || ''
                     };
                 });
 
@@ -864,7 +868,9 @@ ${cocktail.method ? `<strong>Method:</strong> ${cocktail.method}
 ` : ''}${cocktail.altsNotes ? `<strong>Alts/Other Notes:</strong> ${cocktail.altsNotes}
 ` : ''}${useTagsHTML ? `
 <strong>Use Tags:</strong>
-${useTagsHTML}` : ''}
+${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
+
+<strong>Nutrition:</strong> ${cocktail.calories ? `${cocktail.calories} cal` : ''}${cocktail.sugar && cocktail.calories ? ` • ` : ''}${cocktail.sugar ? `${cocktail.sugar}g sugar` : ''}${cocktail.abv && (cocktail.calories || cocktail.sugar) ? ` • ` : ''}${cocktail.abv ? `${Math.round(cocktail.abv * 100)}% ABV` : ''}` : ''}
                     </div>
                 </div>
                 `;
