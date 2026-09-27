@@ -285,8 +285,8 @@
         <!-- Filter App (hidden until connected) -->
         <div id="filterApp" class="filter-app">
             <button class="reset-btn" onclick="resetFilters()">↻ Reset All Filters</button>
-            <button class="reset-btn" onclick="openKitchenSheet()">🖨 House Recipes Kitchen Sheet</button>
-            <button class="reset-btn" onclick="openUntriedSheet()">🖨 Untried Recipes Sheet</button>
+            <button class="reset-btn" onclick="openKitchenSheet()">🖨 House Recipes</button>
+            <button class="reset-btn" onclick="openUnderConstruction()">🖨 Under Construction</button>
 
             <!-- Question 1: Spirit Tone -->
             <div class="filter-section">
@@ -936,7 +936,7 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
             return Array.isArray(v) ? v.join(' / ') : String(v || '').trim();
         }
 
-        function buildKitchenSheetHTML(house, title, emptyMsg) {
+        function buildKitchenSheetHTML(house, title, emptyMsg, tagFor) {
             const groups = {};
             house.forEach(c => {
                 const label = (fieldText(c.menuCategory) || 'Uncategorized');
@@ -955,7 +955,8 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
                 const spec = String(c.recipe || '').split('\n').map(l => l.trim()).filter(Boolean);
                 const meta = [c.method, c.glass, c.ice].map(fieldText)
                     .concat([String(c.garnish || '').trim()]).filter(Boolean).join(' · ');
-                return `<div class="drink"><div class="name">${escHTML(c.name)}</div>` +
+                const tag = tagFor ? tagFor(c) : '';
+                return `<div class="drink"><div class="name">${escHTML(c.name)}${tag ? ` <span class="tag">${escHTML(tag)}</span>` : ''}</div>` +
                     `<ul class="spec">${spec.map(l => `<li>${escHTML(l)}</li>`).join('')}</ul>` +
                     (meta ? `<div class="meta">${escHTML(meta)}</div>` : '') +
                     (String(c.buildNote).trim() ? `<div class="note build"><b>Build:</b> ${escHTML(String(c.buildNote).trim())}</div>` : '') +
@@ -995,6 +996,7 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
 .name { font-family: Georgia, 'Times New Roman', serif; font-weight: bold; font-size: 9.5pt; margin-bottom: 1pt; }
 .spec { list-style: none; padding-left: 6pt; }
 .meta { margin-top: 1.5pt; padding-left: 6pt; font-size: 7.9pt; font-weight: 600; color: #333; }
+.tag { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: .04em; border: 0.6pt solid #555; border-radius: 2pt; padding: 0 2.5pt; margin-left: 3pt; vertical-align: 1pt; color: #333; }
 .note { padding-left: 6pt; font-size: 7.7pt; color: #333; margin-top: 1pt; }
 @media print { .toolbar { display: none; } .page { max-width: none; padding: 0; } }`;
 
@@ -1008,31 +1010,41 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
                 `</div></body></html>`;
         }
 
-        function openSheet(list, title, emptyMsg) {
+        function openSheet(list, title, emptyMsg, tagFor) {
             if (!cocktails.length) { alert('Cocktails have not loaded yet.'); return; }
             const w = window.open('', '_blank');
             if (!w) { alert('Pop-up blocked. Allow pop-ups for this site and try again.'); return; }
             w.document.open();
-            w.document.write(buildKitchenSheetHTML(list, title, emptyMsg));
+            w.document.write(buildKitchenSheetHTML(list, title, emptyMsg, tagFor));
             w.document.close();
         }
 
         function openKitchenSheet() {
-            openSheet(cocktails.filter(c => c.house), 'House Cocktail Recipes',
+            openSheet(cocktails.filter(c => c.house), 'House Recipes',
                 'No records have the "House Recipes" box checked.');
+        }
+
+        function statusList(c) {
+            return (Array.isArray(c.pmhStatus) ? c.pmhStatus : String(c.pmhStatus || '').split(','))
+                .map(x => String(x).trim());
+        }
+
+        function isKeepWorking(c) {
+            return statusList(c).includes('Keep Working');
         }
 
         // Untried = PMH Status does not include "Made" AND Peter Rating is empty
         function isUntried(c) {
-            const status = Array.isArray(c.pmhStatus) ? c.pmhStatus : String(c.pmhStatus || '').split(',');
-            const made = status.some(s => String(s).trim() === 'Made');
+            const made = statusList(c).includes('Made');
             const rated = c.peterRating !== '' && c.peterRating !== null && c.peterRating !== undefined;
             return !made && !rated;
         }
 
-        function openUntriedSheet() {
-            openSheet(cocktails.filter(isUntried), 'Untried Cocktail Recipes',
-                'Every recipe has been made or rated.');
+        // Under Construction = untried, OR PMH Status includes "Keep Working"
+        function openUnderConstruction() {
+            openSheet(cocktails.filter(c => isUntried(c) || isKeepWorking(c)), 'Under Construction',
+                'No recipes are untried or marked Keep Working.',
+                c => isKeepWorking(c) ? 'Keep Working' : '');
         }
 
         // Auto-connect if credentials are stored
