@@ -1079,6 +1079,19 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
         // For these, the brand in parentheses is more useful to a guest: "amaro (Averna)" -> "Averna"
         const GUEST_USE_BRAND = /^(amaro|aperitivo|aperitif)$/i;
 
+        // "Aperol, Campari, Cynar" -> ["Aperol", "Campari", "Cynar"]; one name -> [name]; notes -> []
+        function brandOptions(paren) {
+            if (!paren || /[°%#]|e\.g\.|\bopt|\bsub\b|\?/i.test(paren)) return [];
+            return paren.split(/,|\/|\bor\b/i).map(x => x.trim()).filter(Boolean);
+        }
+
+        // ["A","B"] -> "A or B"; ["A","B","C"] -> "A, B, or C"
+        function joinOptions(opts) {
+            if (opts.length <= 1) return opts[0] || '';
+            if (opts.length === 2) return `${opts[0]} or ${opts[1]}`;
+            return `${opts.slice(0, -1).join(', ')}, or ${opts[opts.length - 1]}`;
+        }
+
         function guestIngredients(recipe) {
             const fr = { '¼': '1/4', '½': '1/2', '¾': '3/4', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8' };
             const out = [];
@@ -1091,11 +1104,13 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
                 s = s.replace(/^rinse of\s+/i, '');
                 const paren = (s.match(/\(([^)]*)\)/) || [])[1];
                 s = s.replace(/\s*\([^)]*\)/g, '').replace(/,?\s*to float$/i, '').trim();
-                if (GUEST_USE_BRAND.test(s) && paren && !/[°%#]|or |e\.g\./i.test(paren)) s = paren.trim();
+                const opts = brandOptions(paren);
+                if (GUEST_USE_BRAND.test(s) && opts.length) s = joinOptions(opts);
                 for (const [re, rep] of GUEST_SIMPLIFY) { if (re.test(s)) { s = rep; break; } }
                 if (s && !out.some(x => x.toLowerCase() === s.toLowerCase())) out.push(s);
             });
-            return out.join(', ');
+            // Semicolons only when an item itself contains commas (three or more options)
+            return out.join(out.some(x => x.includes(',')) ? '; ' : ', ');
         }
 
         function strengthDots(c) {
