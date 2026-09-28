@@ -286,6 +286,7 @@
         <div id="filterApp" class="filter-app">
             <button class="reset-btn" onclick="resetFilters()">↻ Reset All Filters</button>
             <button class="reset-btn" onclick="openKitchenSheet()">🖨 House Recipes</button>
+            <button class="reset-btn" onclick="openGuestMenu()">🖨 Guest Menu</button>
             <button class="reset-btn" onclick="openUnderConstruction()">🖨 Under Construction</button>
 
             <!-- Question 1: Spirit Tone -->
@@ -921,6 +922,30 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
             'Sidecars', 'Daiquiris', 'Highballs', 'Spritzes', 'Shandies'
         ];
 
+        // House Recipes and the Guest Menu: strongest categories first
+        const HOUSE_SECTION_ORDER = [
+            'Old-Fashioneds', 'Martinis', 'Manhattans', 'Negronis', 'Last Words',
+            'Sidecars', 'Daiquiris', 'Highballs', 'Spritzes', 'Shandies'
+        ];
+
+        // Guest Menu section descriptions (edit freely as the house list changes)
+        const GUEST_SECTION_NOTES = {
+            'Old-Fashioneds': 'Spirit with a little sweetener and bitters or amaro. Strong and slow-sipping.',
+            'Martinis': 'Gin or vodka with aromatic wine. Clean, crisp, and spirit-forward.',
+            'Manhattans': 'A base spirit or amaro with sweet vermouth. Rich and rounded, with spice and dark fruit.',
+            'Negronis': 'Bitter Italian aperitif with vermouth and a spirit. Bittersweet and herbal.',
+            'Last Words': 'Citrus with bold herbal or floral liqueurs. Tart and intensely aromatic.',
+            'Sidecars': 'Spirit, citrus, and a fruit or orange liqueur. Tart and bright.',
+            'Daiquiris': 'Spirit, citrus, and a syrup (e.g., honey, almond, fruit). Fresh and balanced.',
+            'Highballs': 'Spirit or aperitif lengthened with soda or tonic. Light and refreshing.',
+            'Spritzes': 'Bitter aperitif with sparkling wine. Low-proof and bittersweet.',
+            'Shandies': 'Beer mixed with citrus or a spirit. Light and easy.'
+        };
+
+        // Strength dots from ABV (Airtable stores ABV as a decimal, e.g. 0.285)
+        const STRENGTH_STRONG = 25;   // % ABV and above: ●●●
+        const STRENGTH_MEDIUM = 13;   // % ABV and above: ●●○ ; below: ●○○
+
         function sectionKey(s) {
             return String(s || '').toLowerCase().replace(/[^a-z]/g, '')
                 .replace(/ies$/, 'y').replace(/zes$/, 'z').replace(/s$/, '');
@@ -936,20 +961,31 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
             return Array.isArray(v) ? v.join(' / ') : String(v || '').trim();
         }
 
-        function buildKitchenSheetHTML(house, title, emptyMsg, tagFor) {
+        // Group drinks by Menu Category in the given section order; drinks alphabetical within
+        function groupBySection(list, sectionOrder) {
             const groups = {};
-            house.forEach(c => {
+            list.forEach(c => {
                 const label = (fieldText(c.menuCategory) || 'Uncategorized');
                 const key = sectionKey(label);
                 if (!groups[key]) groups[key] = { label: label, drinks: [] };
                 groups[key].drinks.push(c);
             });
-            const orderKeys = KITCHEN_SECTION_ORDER.map(sectionKey);
-            const keys = Object.keys(groups).sort((a, b) => {
+            const orderKeys = sectionOrder.map(sectionKey);
+            return Object.keys(groups).sort((a, b) => {
                 const ia = orderKeys.indexOf(a), ib = orderKeys.indexOf(b);
                 if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
                 return groups[a].label.localeCompare(groups[b].label);
+            }).map(k => {
+                const pos = orderKeys.indexOf(k);
+                return {
+                    title: pos !== -1 ? sectionOrder[pos] : groups[k].label,
+                    drinks: groups[k].drinks.sort((a, b) => a.name.localeCompare(b.name))
+                };
             });
+        }
+
+        function buildKitchenSheetHTML(house, title, emptyMsg, tagFor, sectionOrder) {
+            const grouped = groupBySection(house, sectionOrder || KITCHEN_SECTION_ORDER);
 
             const drinkHTML = c => {
                 const spec = String(c.recipe || '').split('\n').map(l => l.trim()).filter(Boolean);
@@ -964,11 +1000,9 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
                     `</div>`;
             };
 
-            const sections = keys.map(k => {
-                const g = groups[k];
-                const pos = orderKeys.indexOf(k);
-                const title = pos !== -1 ? KITCHEN_SECTION_ORDER[pos] : g.label;
-                const drinks = g.drinks.sort((a, b) => a.name.localeCompare(b.name));
+            const sections = grouped.map(g => {
+                const title = g.title;
+                const drinks = g.drinks;
                 // Heading sits inside the first drink block so it never strands at a column bottom
                 const first = drinkHTML(drinks[0]).replace('<div class="drink">', `<div class="drink"><h2>${escHTML(title)}</h2>`);
                 return `<div class="section">${first}${drinks.slice(1).map(drinkHTML).join('')}</div>`;
@@ -1010,18 +1044,126 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
                 `</div></body></html>`;
         }
 
-        function openSheet(list, title, emptyMsg, tagFor) {
+        function openSheet(list, title, emptyMsg, tagFor, sectionOrder) {
             if (!cocktails.length) { alert('Cocktails have not loaded yet.'); return; }
             const w = window.open('', '_blank');
             if (!w) { alert('Pop-up blocked. Allow pop-ups for this site and try again.'); return; }
             w.document.open();
-            w.document.write(buildKitchenSheetHTML(list, title, emptyMsg, tagFor));
+            w.document.write(buildKitchenSheetHTML(list, title, emptyMsg, tagFor, sectionOrder));
             w.document.close();
         }
 
         function openKitchenSheet() {
             openSheet(cocktails.filter(c => c.house), 'House Recipes',
-                'No records have the "House Recipes" box checked.');
+                'No records have the "House Recipes" box checked.', null, HOUSE_SECTION_ORDER);
+        }
+
+        // ---------- Guest Menu ----------
+        // Plain-language ingredient list built from Recipe/Spec
+        const GUEST_SIMPLIFY = [
+            [/^(london dry|old tom|plymouth|navy strength)( or (london dry|old tom|plymouth))? gin$/i, 'gin'],
+            [/^(old tom|london dry|plymouth) or .*gin$/i, 'gin'],
+            [/^(blanco|reposado)( or (blanco|reposado))? tequila$/i, 'tequila'],
+            [/^lemon juice$/i, 'lemon'], [/^lime juice$/i, 'lime'],
+            [/^lemon or lime juice$/i, 'lemon or lime'], [/^lime or lemon juice$/i, 'lime or lemon'],
+            [/^grapefruit juice$/i, 'grapefruit'], [/^pineapple juice$/i, 'pineapple'],
+            [/^orange juice$/i, 'orange'],
+            [/bitters$/i, 'bitters'],
+            [/^(rich )?simple syrup$/i, 'simple syrup'],
+            [/^demerara( gum)? syrup$/i, 'Demerara syrup'],
+            [/^(soda water|soda|club soda|fizzy water)$/i, 'soda'],
+            [/^tonic water$/i, 'tonic'],
+            [/^dry sparkling wine$/i, 'sparkling wine'],
+            [/^fee foam$/i, 'foam'],
+        ];
+        // For these, the brand in parentheses is more useful to a guest: "amaro (Averna)" -> "Averna"
+        const GUEST_USE_BRAND = /^(amaro|aperitivo|aperitif)$/i;
+
+        function guestIngredients(recipe) {
+            const fr = { '¼': '1/4', '½': '1/2', '¾': '3/4', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8' };
+            const out = [];
+            String(recipe || '').split('\n').forEach(line => {
+                let s = line.trim();
+                if (!s || /\(\s*opt/i.test(s)) return;
+                s = s.replace(/[¼½¾⅛⅜⅝⅞]/g, m => ' ' + fr[m]);
+                s = s.replace(/^~?\s*[\d\s\/.\-–]+/, '');
+                s = s.replace(/^(oz|ml|dashes|dash|drops?|tsp|teaspoons?|tbsp|tablespoons?|bar\s*spoons?)\.?\s+/i, '');
+                s = s.replace(/^rinse of\s+/i, '');
+                const paren = (s.match(/\(([^)]*)\)/) || [])[1];
+                s = s.replace(/\s*\([^)]*\)/g, '').replace(/,?\s*to float$/i, '').trim();
+                if (GUEST_USE_BRAND.test(s) && paren && !/[°%#]|or |e\.g\./i.test(paren)) s = paren.trim();
+                for (const [re, rep] of GUEST_SIMPLIFY) { if (re.test(s)) { s = rep; break; } }
+                if (s && !out.some(x => x.toLowerCase() === s.toLowerCase())) out.push(s);
+            });
+            return out.join(', ');
+        }
+
+        function strengthDots(c) {
+            const v = parseFloat(c.abv);
+            if (isNaN(v)) return '';
+            const pct = v <= 1 ? v * 100 : v;
+            return pct >= STRENGTH_STRONG ? '●●●' : pct >= STRENGTH_MEDIUM ? '●●○' : '●○○';
+        }
+
+        function buildGuestMenuHTML(list) {
+            const grouped = groupBySection(list, HOUSE_SECTION_ORDER);
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const sections = grouped.map(g => {
+                const note = GUEST_SECTION_NOTES[g.title] || '';
+                const drinks = g.drinks.map(c =>
+                    `<div class="drink"><div class="row"><span class="name">${escHTML(c.name)}</span>` +
+                    `<span class="dots">${strengthDots(c)}</span></div>` +
+                    `<div class="ing">${escHTML(guestIngredients(c.recipe))}</div></div>`);
+                const head = `<h2>${escHTML(g.title)}</h2>` + (note ? `<div class="snote">${escHTML(note)}</div>` : '');
+                // Keep the heading with the first drink
+                return `<div class="section"><div class="keep">${head}${drinks[0] || ''}</div>${drinks.slice(1).join('')}</div>`;
+            }).join('');
+            const css = `
+@page { size: letter; margin: 0.5in 0.55in; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, 'Times New Roman', serif; font-size: 9pt; line-height: 1.25; color: #1a1a1a; background: #fff; }
+.toolbar { padding: 12px; text-align: center; background: #f0f7f2; border-bottom: 1px solid #a8c5b0;
+           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+.toolbar button { padding: 8px 18px; font-size: 14px; border: none; border-radius: 6px; background: #558b6e; color: #fff; cursor: pointer; }
+.toolbar span { margin-left: 12px; font-size: 13px; color: #2e4a3a; }
+.page { max-width: 7.4in; margin: 0 auto; padding: 18px 0; }
+header { text-align: center; margin-bottom: 10pt; padding-bottom: 6pt; border-bottom: 1pt solid #1a1a1a; }
+header h1 { font-size: 22pt; font-weight: normal; letter-spacing: .12em; text-transform: uppercase; }
+header .sub { margin-top: 3pt; font-size: 8pt; color: #555; font-style: italic; }
+header .key { margin-top: 4pt; font-size: 8pt; color: #333; }
+header .key span { margin: 0 6pt; white-space: nowrap; }
+.cols { column-count: 2; column-gap: 0.35in; }
+.section { margin-bottom: 9pt; }
+.keep, .drink { break-inside: avoid; page-break-inside: avoid; }
+h2 { font-size: 10.5pt; font-weight: normal; text-transform: uppercase; letter-spacing: .14em;
+     border-bottom: 0.6pt solid #1a1a1a; padding-bottom: 1.5pt; }
+.snote { font-style: italic; font-size: 8pt; color: #444; margin: 2pt 0 4pt; }
+.drink { margin: 0 0 4.5pt; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 8pt; }
+.name { font-weight: bold; font-size: 9.5pt; }
+.dots { font-family: 'Segoe UI Symbol', 'DejaVu Sans', Arial, sans-serif; font-size: 7.5pt; letter-spacing: 1pt; color: #333; white-space: nowrap; }
+.ing { font-size: 8.2pt; color: #333; }
+@media print { .toolbar { display: none; } .page { max-width: none; padding: 0; } }`;
+            return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>House Cocktails</title>` +
+                `<style>${css}</style></head><body>` +
+                `<div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button>` +
+                `<span>${list.length} drinks</span></div>` +
+                `<div class="page"><header><h1>House Cocktails</h1>` +
+                `<div class="sub">Updated ${today}</div>` +
+                `<div class="key">Strength: <span>●●● strong</span><span>●●○ medium</span><span>●○○ light</span></div>` +
+                `</header>` +
+                (list.length ? `<div class="cols">${sections}</div>`
+                             : `<p>No records have the "House Recipes" box checked.</p>`) +
+                `</div></body></html>`;
+        }
+
+        function openGuestMenu() {
+            if (!cocktails.length) { alert('Cocktails have not loaded yet.'); return; }
+            const w = window.open('', '_blank');
+            if (!w) { alert('Pop-up blocked. Allow pop-ups for this site and try again.'); return; }
+            w.document.open();
+            w.document.write(buildGuestMenuHTML(cocktails.filter(c => c.house)));
+            w.document.close();
         }
 
         function statusList(c) {
