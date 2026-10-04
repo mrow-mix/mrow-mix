@@ -524,6 +524,7 @@
                         buildNote: record.fields['Build Note'] || '',
                         altsNotes: record.fields['Alts/Other Notes'] || '',
                         peterRating: record.fields['Peter Rating'] || '',
+                        andyRating: record.fields['Andy Rating'] || '',
                         ingredientCategories: record.fields['Ingredient Categories'] || '',
                         // Multi-select fields come as arrays from Airtable API
                         spiritTone: record.fields['Spirit Tone'] || [],
@@ -984,7 +985,14 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
             });
         }
 
-        function buildKitchenSheetHTML(house, title, emptyMsg, tagFor, sectionOrder) {
+        // "P4 · A3"; only ratings that exist; '' if none
+        function ratingsText(c) {
+            const p = String(c.peterRating == null ? '' : c.peterRating).trim();
+            const a = String(c.andyRating == null ? '' : c.andyRating).trim();
+            return [p ? `P${p}` : '', a ? `A${a}` : ''].filter(Boolean).join(' · ');
+        }
+
+        function buildKitchenSheetHTML(house, title, emptyMsg, tagFor, sectionOrder, showRatings) {
             const grouped = groupBySection(house, sectionOrder || KITCHEN_SECTION_ORDER);
 
             const drinkHTML = c => {
@@ -992,7 +1000,10 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
                 const meta = [c.method, c.glass, c.ice].map(fieldText)
                     .concat([String(c.garnish || '').trim()]).filter(Boolean).join(' · ');
                 const tag = tagFor ? tagFor(c) : '';
-                return `<div class="drink"><div class="name">${escHTML(c.name)}${tag ? ` <span class="tag">${escHTML(tag)}</span>` : ''}</div>` +
+                const rt = showRatings ? ratingsText(c) : '';
+                return `<div class="drink"><div class="name">${escHTML(c.name)}` +
+                    (rt ? ` <span class="rt">${escHTML(rt)}</span>` : '') +
+                    (tag ? ` <span class="tag">${escHTML(tag)}</span>` : '') + `</div>` +
                     `<ul class="spec">${spec.map(l => `<li>${escHTML(l)}</li>`).join('')}</ul>` +
                     (meta ? `<div class="meta">${escHTML(meta)}</div>` : '') +
                     (String(c.buildNote).trim() ? `<div class="note build"><b>Build:</b> ${escHTML(String(c.buildNote).trim())}</div>` : '') +
@@ -1030,6 +1041,7 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
 .name { font-family: Georgia, 'Times New Roman', serif; font-weight: bold; font-size: 9.5pt; margin-bottom: 1pt; }
 .spec { list-style: none; padding-left: 6pt; }
 .meta { margin-top: 1.5pt; padding-left: 6pt; font-size: 7.9pt; font-weight: 600; color: #333; }
+.rt { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: normal; font-size: 7pt; color: #666; margin-left: 3pt; }
 .tag { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: .04em; border: 0.6pt solid #555; border-radius: 2pt; padding: 0 2.5pt; margin-left: 3pt; vertical-align: 1pt; color: #333; }
 .note { padding-left: 6pt; font-size: 7.7pt; color: #333; margin-top: 1pt; }
 @media print { .toolbar { display: none; } .page { max-width: none; padding: 0; } }`;
@@ -1044,12 +1056,12 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
                 `</div></body></html>`;
         }
 
-        function openSheet(list, title, emptyMsg, tagFor, sectionOrder) {
+        function openSheet(list, title, emptyMsg, tagFor, sectionOrder, showRatings) {
             if (!cocktails.length) { alert('Cocktails have not loaded yet.'); return; }
             const w = window.open('', '_blank');
             if (!w) { alert('Pop-up blocked. Allow pop-ups for this site and try again.'); return; }
             w.document.open();
-            w.document.write(buildKitchenSheetHTML(list, title, emptyMsg, tagFor, sectionOrder));
+            w.document.write(buildKitchenSheetHTML(list, title, emptyMsg, tagFor, sectionOrder, showRatings));
             w.document.close();
         }
 
@@ -1201,7 +1213,7 @@ h2 { font-size: 10.5pt; font-weight: normal; text-transform: uppercase; letter-s
         function openUnderConstruction() {
             openSheet(cocktails.filter(c => isUntried(c) || isKeepWorking(c)), 'Under Construction',
                 'No recipes are untried or marked Keep Working.',
-                c => isKeepWorking(c) ? 'Keep Working' : '');
+                c => isKeepWorking(c) ? 'Keep Working' : '', null, true);
         }
 
         // Auto-connect if credentials are stored
