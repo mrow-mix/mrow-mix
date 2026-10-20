@@ -308,13 +308,13 @@
                 </div>
             </div>
 
-            <!-- Question 3: Serving Style -->
+            <!-- Question 3: Strength (by ABV; cut points in STRENGTH_STRONG / STRENGTH_MEDIUM) -->
             <div class="filter-section">
-                <h2>3. How would you like it served?</h2>
+                <h2>3. How strong?</h2>
                 <div class="button-group">
-                    <button class="filter-btn" data-filter="serving" data-value="Up">Up</button>
-                    <button class="filter-btn" data-filter="serving" data-value="Tall">Tall</button>
-                    <button class="filter-btn" data-filter="serving" data-value="On the rocks">On the Rocks</button>
+                    <button class="filter-btn" data-filter="strength" data-value="Light">Light</button>
+                    <button class="filter-btn" data-filter="strength" data-value="Medium">Medium</button>
+                    <button class="filter-btn" data-filter="strength" data-value="Strong">Strong</button>
                 </div>
             </div>
 
@@ -352,7 +352,7 @@
 
             <!-- Question 6: Peter Rating -->
             <div class="filter-section">
-                <h2>6. Peter rating?</h2>
+                <h2>6. Peter's rating?</h2>
                 <div class="button-group">
                     <button class="filter-btn" data-filter="rating" data-value="Unrated">Unrated</button>
                     <button class="filter-btn" data-filter="rating" data-value="1">★</button>
@@ -384,7 +384,7 @@
         let filters = {
             tone: [],
             style: [],
-            serving: [],
+            strength: [],
             flavor: [],
             useTags: [],
             rating: []
@@ -536,6 +536,8 @@
                         calories: record.fields.Calories || '',
                         sugar: record.fields['Sugar (g)'] || '',
                         abv: record.fields.ABV || '',
+                        alcohol: record.fields['Alcohol (oz)'] || '',
+                        volume: record.fields['Volume (oz)'] || '',
                         // House Recipes kitchen sheet
                         house: record.fields['House Recipes'] === true,
                         pmhStatus: record.fields['PMH Status'] || [],
@@ -656,24 +658,21 @@
                 });
             });
 
-            const servingButtons = document.querySelectorAll('.filter-btn[data-filter="serving"]');
-            console.log('Serving buttons found:', servingButtons.length);
-            
-            servingButtons.forEach(btn => {
+            const strengthButtons = document.querySelectorAll('.filter-btn[data-filter="strength"]');
+
+            strengthButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    console.log('Serving button clicked:', this.dataset.value);
                     this.classList.toggle('active');
                     const value = this.dataset.value;
-                    
+
                     if (this.classList.contains('active')) {
-                        if (!filters.serving.includes(value)) {
-                            filters.serving.push(value);
+                        if (!filters.strength.includes(value)) {
+                            filters.strength.push(value);
                         }
                     } else {
-                        filters.serving = filters.serving.filter(s => s !== value);
+                        filters.strength = filters.strength.filter(s => s !== value);
                     }
-                    
-                    console.log('Filters after serving click:', filters);
+
                     applyFilters();
                 });
             });
@@ -768,25 +767,9 @@
                     if (!hasMatch) return false;
                 }
 
-                // Serving filter (maps to glass + ice combination)
-                if (filters.serving.length > 0) {
-                    const hasMatch = filters.serving.some(serving => {
-                        if (serving === 'Up') {
-                            // "Up" = served without ice (Ice field contains "Up")
-                            const iceStr = Array.isArray(cocktail.ice) ? cocktail.ice.join(',') : cocktail.ice;
-                            return iceStr.toLowerCase().includes('up');
-                        } else if (serving === 'Tall') {
-                            // "Tall" = served in tall glass
-                            const glassStr = Array.isArray(cocktail.glass) ? cocktail.glass.join(',') : cocktail.glass;
-                            return glassStr.toLowerCase().includes('tall');
-                        } else if (serving === 'On the rocks') {
-                            // "On the rocks" = served with ice
-                            const iceStr = Array.isArray(cocktail.ice) ? cocktail.ice.join(',') : cocktail.ice;
-                            return iceStr.toLowerCase().includes('on ice');
-                        }
-                        return false;
-                    });
-                    if (!hasMatch) return false;
+                // Strength filter (OR logic; tiers from ABV, same cut points as the guest menu)
+                if (filters.strength.length > 0) {
+                    if (!filters.strength.includes(strengthTier(cocktail))) return false;
                 }
 
                 // Flavor Profile filter (AND logic - ALL selected flavors must be present)
@@ -878,9 +861,9 @@ ${cocktail.method ? `<strong>Method:</strong> ${cocktail.method}
 ` : ''}${cocktail.altsNotes ? `<strong>Alts/Other Notes:</strong> ${cocktail.altsNotes}
 ` : ''}${useTagsHTML ? `
 <strong>Use Tags:</strong>
-${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
+${useTagsHTML}` : ''}${nutritionText(cocktail) ? `
 
-<strong>Nutrition:</strong> ${cocktail.calories ? `${cocktail.calories} cal` : ''}${cocktail.sugar && cocktail.calories ? ` • ` : ''}${cocktail.sugar ? `${cocktail.sugar}g sugar` : ''}${cocktail.abv && (cocktail.calories || cocktail.sugar) ? ` • ` : ''}${cocktail.abv ? `${Math.round(cocktail.abv * 100)}% ABV` : ''}` : ''}
+<strong>Nutrition:</strong> ${nutritionText(cocktail)}` : ''}
                     </div>
                 </div>
                 `;
@@ -901,7 +884,7 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
             filters = {
                 tone: [],
                 style: [],
-                serving: [],
+                strength: [],
                 flavor: [],
                 useTags: [],
                 rating: []
@@ -936,8 +919,8 @@ ${useTagsHTML}` : ''}${cocktail.calories || cocktail.sugar || cocktail.abv ? `
             'Manhattans': 'A base spirit or amaro with sweet vermouth. Rich and rounded, with spice and dark fruit.',
             'Negronis': 'Bitter Italian aperitif with vermouth and a spirit. Bittersweet and herbal.',
             'Last Words': 'Citrus with bold herbal or floral liqueurs. Tart and intensely aromatic.',
-            'Sidecars': 'Spirit and citrus with a flavorful liqueur. Layered and bright.',
-            'Daiquiris': 'Spirit and citrus, sweetened with a syrup (e.g., honey, almond, ginger). Clean and bright.',
+            'Sidecars': 'Spirit, citrus, and a fruit or orange liqueur. Tart and bright.',
+            'Daiquiris': 'Spirit, citrus, and a syrup (e.g., honey, almond, fruit). Fresh and balanced.',
             'Highballs': 'Spirit or aperitif lengthened with soda or tonic. Light and refreshing.',
             'Spritzes': 'Bitter aperitif with sparkling wine. Low-proof and bittersweet.',
             'Shandies': 'Beer mixed with citrus or a spirit. Light and easy.'
@@ -1123,6 +1106,32 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
             });
             // Semicolons only when an item itself contains commas (three or more options)
             return out.join(out.some(x => x.includes(',')) ? '; ' : ', ');
+        }
+
+        function abvPercent(c) {
+            const v = parseFloat(c.abv);
+            if (isNaN(v)) return null;
+            return v <= 1 ? v * 100 : v;
+        }
+
+        function strengthTier(c) {
+            const pct = abvPercent(c);
+            if (pct === null) return '';
+            return pct >= STRENGTH_STRONG ? 'Strong' : pct >= STRENGTH_MEDIUM ? 'Medium' : 'Light';
+        }
+
+        // Nutrition line: volume, ABV, alcohol, calories, sugar (missing values omitted)
+        function nutritionText(c) {
+            const parts = [];
+            const vol = parseFloat(c.volume);
+            if (!isNaN(vol) && vol > 0) parts.push(`${vol.toFixed(1)} oz`);
+            const pct = abvPercent(c);
+            if (pct !== null) parts.push(`${Math.round(pct)}% ABV`);
+            const alc = parseFloat(c.alcohol);
+            if (!isNaN(alc) && alc > 0) parts.push(`${alc.toFixed(2)} oz alcohol`);
+            if (c.calories) parts.push(`${c.calories} cal`);
+            if (c.sugar) parts.push(`${c.sugar}g sugar`);
+            return parts.join(' • ');
         }
 
         function strengthDots(c) {
