@@ -127,6 +127,16 @@
             color: white;
         }
 
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .category-grid .filter-btn {
+            min-width: 0;
+        }
+
         .flavor-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -318,9 +328,26 @@
                 </div>
             </div>
 
-            <!-- Question 4: Flavor Profile (multi-select with AND logic) -->
+            <!-- Question 4: Menu Category (multi-select, OR logic) -->
             <div class="filter-section">
-                <h2>4. Flavor profile?</h2>
+                <h2>4. What category?</h2>
+                <div class="category-grid">
+                    <button class="filter-btn" data-filter="category" data-value="Old-Fashioneds">Old-Fashioneds</button>
+                    <button class="filter-btn" data-filter="category" data-value="Martinis">Martinis</button>
+                    <button class="filter-btn" data-filter="category" data-value="Manhattans">Manhattans</button>
+                    <button class="filter-btn" data-filter="category" data-value="Negronis">Negronis</button>
+                    <button class="filter-btn" data-filter="category" data-value="Last Words">Last Words</button>
+                    <button class="filter-btn" data-filter="category" data-value="Sidecars">Sidecars</button>
+                    <button class="filter-btn" data-filter="category" data-value="Daiquiris">Daiquiris</button>
+                    <button class="filter-btn" data-filter="category" data-value="Highballs">Highballs</button>
+                    <button class="filter-btn" data-filter="category" data-value="Spritzes">Spritzes</button>
+                    <button class="filter-btn" data-filter="category" data-value="Shandies">Shandies</button>
+                </div>
+            </div>
+
+            <!-- Question 5: Flavor Profile (multi-select with AND logic) -->
+            <div class="filter-section">
+                <h2>5. Flavor profile?</h2>
                 <div class="flavor-grid">
                     <button class="flavor-btn" data-filter="flavor" data-value="Sweet">Sweet</button>
                     <button class="flavor-btn" data-filter="flavor" data-value="Dry">Dry</button>
@@ -342,17 +369,17 @@
                 </div>
             </div>
 
-            <!-- Question 5: Use Case -->
+            <!-- Question 6: Use Case -->
             <div class="filter-section">
-                <h2>5. Occasion?</h2>
+                <h2>6. Occasion?</h2>
                 <div id="useTagContainer" class="flavor-grid">
                     <!-- Use tags will be populated dynamically -->
                 </div>
             </div>
 
-            <!-- Question 6: Peter Rating -->
+            <!-- Question 7: Peter Rating -->
             <div class="filter-section">
-                <h2>6. Peter's rating?</h2>
+                <h2>7. Peter's rating?</h2>
                 <div class="button-group">
                     <button class="filter-btn" data-filter="rating" data-value="Unrated">Unrated</button>
                     <button class="filter-btn" data-filter="rating" data-value="1">★</button>
@@ -385,6 +412,7 @@
             tone: [],
             style: [],
             strength: [],
+                category: [],
             flavor: [],
             useTags: [],
             rating: []
@@ -658,6 +686,25 @@
                 });
             });
 
+            const categoryButtons = document.querySelectorAll('.filter-btn[data-filter="category"]');
+
+            categoryButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const value = this.dataset.value;
+
+                    if (this.classList.contains('active')) {
+                        if (!filters.category.includes(value)) {
+                            filters.category.push(value);
+                        }
+                    } else {
+                        filters.category = filters.category.filter(c => c !== value);
+                    }
+
+                    applyFilters();
+                });
+            });
+
             const strengthButtons = document.querySelectorAll('.filter-btn[data-filter="strength"]');
 
             strengthButtons.forEach(btn => {
@@ -765,6 +812,11 @@
                 if (filters.style.length > 0) {
                     const hasMatch = filters.style.some(style => cocktail.style === style);
                     if (!hasMatch) return false;
+                }
+
+                // Menu Category filter (OR logic)
+                if (filters.category.length > 0) {
+                    if (!filters.category.includes(cocktail.menuCategory)) return false;
                 }
 
                 // Strength filter (OR logic; tiers from ABV, same cut points as the guest menu)
@@ -885,6 +937,7 @@ ${useTagsHTML}` : ''}${nutritionText(cocktail) ? `
                 tone: [],
                 style: [],
                 strength: [],
+                category: [],
                 flavor: [],
                 useTags: [],
                 rating: []
