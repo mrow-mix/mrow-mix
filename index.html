@@ -1124,8 +1124,9 @@ h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; text-tra
             [/^dry sparkling wine$/i, 'sparkling wine'],
             [/^fee foam$/i, 'foam'],
         ];
-        // For these, the brand in parentheses is more useful to a guest: "amaro (Averna)" -> "Averna"
-        const GUEST_USE_BRAND = /^(amaro|aperitivo|aperitif)$/i;
+        // For these, the brand in parentheses is more useful to a guest: "amaro (Averna)" -> "Averna",
+        // "triple sec (Cointreau)" -> "Cointreau"
+        const GUEST_USE_BRAND = /^(amaro|aperitivo|aperitif|triple sec)$/i;
 
         // "Aperol, Campari, Cynar" -> ["Aperol", "Campari", "Cynar"]; one name -> [name]; notes -> []
         function brandOptions(paren) {
